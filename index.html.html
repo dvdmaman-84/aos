@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AOS — Audit Organisationnel et Structurel</title>
+
+<!-- AOS - CONFIGURATION VISUELLE
+  Modifiez le bloc THEME ci-dessous pour adapter le design
+  a votre identite de marque. Tout le reste suit automatiquement. -->
+
+<script>
+/* ---------------------------------------------------------
+   1. POLICES - choisissez vos deux polices Google Fonts
+      font_display : police des titres (Syne, Playfair Display,
+        Montserrat, Raleway, Oswald, Cormorant Garamond…)
+      font_body    : police du corps de texte (DM Sans, Inter,
+        Lato, Source Sans 3, Nunito…)
+   --------------------------------------------------------- */
+var THEME = {
+  // Polices Google Fonts (titres / corps)
+  font_display : 'Syne',
+  font_body    : 'DM Sans',
+  // Couleurs principales
+  color_primary   : '#0F1923',
+  color_secondary : '#1B4F8A',
+  color_accent    : '#B8933A',
+  color_bg        : '#F5F2EB',
+  color_surface   : '#FFFFFF',
+  // Arrondis
+  radius_sm : '10px',
+  radius_lg : '16px',
+  // Logo (logo_img = URL image, laisser vide pour texte seul)
+  logo_text   : 'AOS — Audit Organisationnel',
+  logo_img    : '',
+  logo_height : 32,
+  // Barre de progression (vide = color_accent)
+  progress_color : ''
+};
+
+/* -- NE PAS MODIFIER EN DESSOUS DE CETTE LIGNE -- */
+(function applyTheme(){
+  /* Charger les polices Google */
+  var fonts=[THEME.font_display,THEME.font_body].filter(function(f,i,a){return a.indexOf(f)===i});
+  var link=document.createElement('link');
+  link.rel='stylesheet';
+  link.href='https://fonts.googleapis.com/css2?'+fonts.map(function(f){
+    return 'family='+f.replace(/ /g,'+').replace(/Syne/,'Syne:wght@400;500;600;700;800').replace(/DM Sans/,'DM+Sans:ital,wght@0,300;0,400;0,500;1,300').replace(/Playfair Display/,'Playfair+Display:wght@400;600;700').replace(/Montserrat/,'Montserrat:wght@400;500;600;700').replace(/Raleway/,'Raleway:wght@400;500;600;700').replace(/Cormorant Garamond/,'Cormorant+Garamond:wght@400;500;600;700').replace(/Oswald/,'Oswald:wght@400;500;600;700').replace(/Lato/,'Lato:wght@300;400;700').replace(/Nunito/,'Nunito:wght@300;400;500;600;700').replace(/Source Sans 3/,'Source+Sans+3:wght@300;400;600;700').replace(/Inter/,'Inter:wght@300;400;500;600');
+  }).join('&')+'&display=swap';
+  document.head.appendChild(link);
+
+  /* Dériver les variantes de couleurs */
+  function hexToRgb(h){
+    var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+    return {r,g,b};
+  }
+  function lighten(h,pct){
+    var c=hexToRgb(h);
+    var r=Math.round(c.r+(255-c.r)*pct);
+    var g=Math.round(c.g+(255-c.g)*pct);
+    var b=Math.round(c.b+(255-c.b)*pct);
+    return 'rgb('+r+','+g+','+b+')';
+  }
+
+  function darken(h,pct){
+    var c=hexToRgb(h);
+    var r=Math.round(c.r*(1-pct));
+    var g=Math.round(c.g*(1-pct));
+    var b=Math.round(c.b*(1-pct));
+    return 'rgb('+r+','+g+','+b+')';
+  }
+  var p=THEME.color_primary;
+  var s=THEME.color_secondary;
+  var a=THEME.color_accent;
+  var bg=THEME.color_bg;
+  var prog=THEME.progress_color||a;
+
+  /* Injecter les variables CSS */
+  var style=document.createElement('style');
+  style.textContent=':root{'
+    +'--navy:'+p+';'
+    +'--navy2:'+lighten(p,.08)+';'
+    +'--blue:'+s+';'
+    +'--blue-light:'+lighten(s,.2)+';'
+    +'--gold:'+a+';'
+    +'--gold-light:'+lighten(a,.15)+';'
+    +'--cream:'+bg+';'
+    +'--cream2:'+darken(bg,.04)+';'
+    +'--white:'+THEME.color_surface+';'
+    +'--text:#1A1A1A;'
+    +'--muted:#6B6B6B;'
+    +'--border:#D8D4CC;'
+    +'--error:#C0392B;'
+    +'--green:#0E6E50;'
+    +'--green-light:#127A5A;'
+    +'--radius:'+THEME.radius_sm+';'
+    +'--radius-lg:'+THEME.radius_lg+';'
+    +'--font-display:\''+THEME.font_display+'\',sans-serif;'
+    +'--font-body:\''+THEME.font_body+'\',sans-serif;'
+    +'--progress:'+prog+';'
+    +'}';
+  document.head.appendChild(style);
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- CONFIGURATION MAKE.COM
+  Collez ici votre URL webhook Make.com -->
+<script>
+var MAKE_WEBHOOK = 'https://hook.eu1.make.com/ge9j1q4vjimdguf4e6sk2ngz378tmfos';
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body,'DM Sans',sans-serif);
+  background:var(--cream);
+  color:var(--text);
+  min-height:100vh;
+  font-size:16px;
+  line-height:1.6;
+}
+
+/* HEADER */
+.header{
+  background:var(--navy);
+  padding:1rem 1.5rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.header-logo{
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:1.1rem;
+  color:var(--white);
+  letter-spacing:.04em;
+}
+.header-logo span{color:var(--gold-light)}
+.header-step{
+  font-family:var(--font-body);
+  font-size:.78rem;
+  color:rgba(255,255,255,.5);
+  font-weight:300;
+}
+
+/* PROGRESS */
+.progress-wrap{background:rgba(255,255,255,.12);height:3px}
+.progress-bar{height:3px;background:var(--progress,var(--gold-light));transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* SCREEN WRAPPER */
+.screen{
+  display:none;
+  max-width:640px;
+  margin:0 auto;
+  padding:2rem 1.25rem 4rem;
+  animation:fadeUp .45s ease both;
+}
+.screen.active{display:block}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* INTRO SCREEN */
+.intro-eyebrow{
+  font-family:var(--font-display);
+  font-size:.7rem;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--blue);
+  margin-bottom:1rem;
+}
+.intro-headline{
+  font-family:var(--font-display);
+  font-size:clamp(1.6rem,5vw,2.4rem);
+  font-weight:800;
+  line-height:1.15;
+  color:var(--navy);
+  margin-bottom:1.25rem;
+}
+.intro-headline em{
+  font-style:italic;
+  color:var(--blue);
+  font-weight:700;
+}
+.intro-subline{
+  font-size:1.05rem;
+  color:var(--muted);
+  font-weight:300;
+  line-height:1.7;
+  margin-bottom:2rem;
+  border-left:3px solid var(--gold);
+  padding-left:1rem;
+}
+.intro-meta{
+  display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap;
+}
+.intro-meta-item{
+  display:flex;align-items:center;gap:.5rem;
+  font-size:.85rem;color:var(--muted);
+}
+.meta-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:.6rem;
+  background:var(--navy);
+  color:var(--white);
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:.95rem;
+  letter-spacing:.02em;
+  padding:.85rem 2rem;
+  border-radius:var(--radius);
+  border:none;cursor:pointer;
+  transition:background .2s,transform .15s;
+  text-decoration:none;
+}
+.btn-primary:hover{background:var(--blue);transform:translateY(-1px)}
+.btn-primary svg{width:18px;height:18px;transition:transform .2s}
+.btn-primary:hover svg{transform:translateX(3px)}
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:transparent;
+  color:var(--navy);
+  font-family:var(--font-body);
+  font-size:.88rem;
+  padding:.7rem 1.4rem;
+  border-radius:var(--radius);
+  border:1.5px solid var(--border);
+  cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.btn-secondary:hover{border-color:var(--navy);background:var(--cream2)}
+.btn-ghost{
+  background:none;border:none;
+  color:var(--muted);
+  font-size:.82rem;
+  cursor:pointer;
+  padding:.5rem;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  font-family:var(--font-body);
+}
+.btn-ghost:hover{color:var(--navy)}
+
+/* OFFER SELECTION */
+.offer-grid{display:grid;gap:1rem;margin-bottom:1.5rem}
+.offer-card{
+  background:var(--white);
+  border:2px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:1.25rem 1.5rem;
+  cursor:pointer;
+  transition:border-color .2s,transform .15s;
+  position:relative;
+  user-select:none;
+}
+.offer-card:hover{border-color:var(--blue-light);transform:translateY(-2px)}
+.offer-card.selected{border-color:var(--blue);background:#EFF6FF}
+.offer-card.selected-green{border-color:var(--green);background:#EBF7F3}
+.offer-card.selected-gold{border-color:var(--gold);background:#FBF6EC}
+.offer-badge{
+  position:absolute;top:-10px;right:16px;
+  background:var(--blue);color:var(--white);
+  font-family:var(--font-display);font-weight:700;
+  font-size:.65rem;letter-spacing:.08em;
+  padding:.25rem .75rem;border-radius:20px;
+  text-transform:uppercase;
+}
+.offer-badge.gold{background:var(--gold)}
+.offer-name{
+  font-family:var(--font-display);font-weight:700;
+  font-size:1rem;color:var(--navy);margin-bottom:.2rem;
+}
+.offer-price{
+  font-size:.85rem;color:var(--blue);
+  font-weight:500;margin-bottom:.5rem;
+}
+.offer-desc{font-size:.85rem;color:var(--muted);line-height:1.55}
+.offer-check{
+  position:absolute;top:1rem;right:1rem;
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.offer-card.selected .offer-check,
+.offer-card.selected-green .offer-check,
+.offer-card.selected-gold .offer-check{
+  background:var(--navy);border-color:var(--navy);
+}
+.offer-check svg{width:10px;height:10px;stroke:white;display:none}
+.offer-card.selected .offer-check svg,
+.offer-card.selected-green .offer-check svg,
+.offer-card.selected-gold .offer-check svg{display:block}
+
+/* FORM ELEMENTS */
+.section-eyebrow{
+  font-family:var(--font-display);font-size:.65rem;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:.5rem;
+}
+.section-title{
+  font-family:var(--font-display);font-size:1.4rem;font-weight:800;
+  color:var(--navy);margin-bottom:.4rem;line-height:1.25;
+}
+.section-intro{
+  font-size:.92rem;color:var(--muted);font-weight:300;
+  font-style:italic;line-height:1.6;margin-bottom:1.75rem;
+  padding:.75rem 1rem;
+  background:var(--white);border-radius:var(--radius);
+  border-left:3px solid var(--gold);
+}
+.field-label{
+  font-family:var(--font-display);font-size:.8rem;font-weight:600;
+  letter-spacing:.04em;color:var(--navy);
+  margin-bottom:.65rem;display:block;
+}
+.field-label .optional{
+  font-weight:400;color:var(--muted);font-family:var(--font-body);
+  font-size:.75rem;letter-spacing:0;margin-left:.4rem;
+}
+input[type=text],input[type=email],input[type=tel],textarea,select{
+  width:100%;
+  padding:.75rem 1rem;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  font-family:var(--font-body);font-size:.95rem;
+  color:var(--text);background:var(--white);
+  transition:border-color .2s;
+  outline:none;
+  -webkit-appearance:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+.field-group{margin-bottom:1.4rem}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:480px){.field-row{grid-template-columns:1fr}}
+
+/* CHECK CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chip{
+  padding:.45rem .95rem;
+  border:1.5px solid var(--border);
+  border-radius:20px;cursor:pointer;
+  font-size:.84rem;color:var(--muted);
+  background:var(--white);
+  transition:all .15s;
+  user-select:none;
+}
+.chip:hover{border-color:var(--blue);color:var(--navy)}
+.chip.active{
+  background:var(--navy);border-color:var(--navy);
+  color:var(--white);font-weight:500;
+}
+/* CHAMP AUTRE */
+.autre-field{
+  display:none;margin-top:.65rem;width:100%;
+  animation:fadeUp .2s ease both;
+}
+.autre-field.visible{display:block}
+/* AUTOCOMPLETE SOCIÉTÉ */
+.autocomplete-wrap{position:relative}
+.autocomplete-list{
+  position:absolute;top:100%;left:0;right:0;z-index:50;
+  background:var(--white);border:1.5px solid var(--blue);
+  border-top:none;border-radius:0 0 var(--radius) var(--radius);
+  max-height:220px;overflow-y:auto;
+  box-shadow:0 8px 24px rgba(15,25,35,.12);
+}
+.autocomplete-item{
+  padding:.7rem 1rem;cursor:pointer;
+  border-bottom:1px solid var(--cream2);
+  transition:background .12s;
+}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover{background:var(--cream)}
+.ac-name{font-size:.9rem;font-weight:500;color:var(--navy)}
+.ac-meta{font-size:.75rem;color:var(--muted);margin-top:.1rem}
+.ac-loading{padding:.85rem 1rem;font-size:.85rem;color:var(--muted);text-align:center}
+.societe-info-card{
+  background:var(--cream2);border-radius:var(--radius);
+  padding:.85rem 1rem;margin-top:.65rem;
+  border:1px solid var(--border);font-size:.83rem;
+  line-height:1.7;display:none;
+}
+.societe-info-card.visible{display:block}
+.societe-info-card strong{color:var(--navy);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+
+/* NAV BUTTONS */
+.nav-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:2rem;gap:1rem;
+}
+.nav-row.first{justify-content:flex-end}
+
+/* RGPD */
+.rgpd-row{
+  display:flex;gap:.75rem;align-items:flex-start;
+  background:var(--cream2);border-radius:var(--radius);
+  padding:.85rem 1rem;margin-bottom:1.5rem;
+  border:1px solid var(--border);
+}
+.rgpd-row input[type=checkbox]{
+  width:18px;height:18px;flex-shrink:0;
+  margin-top:2px;cursor:pointer;accent-color:var(--navy);
+}
+.rgpd-text{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* RÉCAP */
+.recap-grid{display:grid;gap:.75rem;margin-bottom:2rem}
+.recap-item{
+  background:var(--white);border-radius:var(--radius);
+  padding:.85rem 1.1rem;
+  border:1px solid var(--border);
+}
+.recap-bloc-name{
+  font-family:var(--font-display);font-size:.65rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:.3rem;
+}
+.recap-content{font-size:.88rem;color:var(--text);line-height:1.5}
+.recap-highlight{
+  background:var(--navy);color:var(--white);
+  border-radius:var(--radius-lg);padding:1.1rem 1.4rem;
+  margin-bottom:1.5rem;
+  font-size:.95rem;line-height:1.7;
+  font-style:italic;
+}
+.recap-highlight strong{
+  font-family:var(--font-display);font-style:normal;
+  display:block;font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;opacity:.6;margin-bottom:.4rem;
+}
+
+/* PAIEMENT */
+.payment-card{
+  background:var(--white);border-radius:var(--radius-lg);
+  border:2px solid var(--navy);
+  padding:1.5rem;margin-bottom:1rem;
+  text-align:center;
+}
+.payment-price{
+  font-family:var(--font-display);font-size:2.2rem;font-weight:800;
+  color:var(--navy);margin-bottom:.3rem;
+}
+.payment-label{font-size:.85rem;color:var(--muted);margin-bottom:1.2rem}
+.payment-features{
+  list-style:none;text-align:left;margin-bottom:1.5rem;
+}
+.payment-features li{
+  font-size:.88rem;color:var(--text);padding:.35rem 0;
+  display:flex;gap:.7rem;align-items:flex-start;
+}
+.feat-dot{
+  width:16px;height:16px;border-radius:50%;
+  background:var(--green);flex-shrink:0;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;
+}
+.feat-dot svg{width:8px;height:8px;stroke:white}
+.btn-pay{
+  width:100%;
+  background:var(--navy);color:var(--white);
+  font-family:var(--font-display);font-weight:700;
+  font-size:1rem;letter-spacing:.02em;
+  padding:1rem;border-radius:var(--radius);
+  border:none;cursor:pointer;
+  transition:background .2s,transform .15s;
+  display:flex;align-items:center;justify-content:center;gap:.6rem;
+}
+.btn-pay:hover{background:var(--blue);transform:translateY(-1px)}
+.btn-pay svg{width:18px;height:18px}
+.doubt-section{
+  background:var(--cream2);border-radius:var(--radius-lg);
+  padding:1.25rem 1.5rem;
+  border:1px solid var(--border);
+  margin-bottom:1rem;
+  text-align:center;
+}
+.doubt-title{
+  font-family:var(--font-display);font-size:.85rem;font-weight:700;
+  color:var(--navy);margin-bottom:.3rem;
+}
+.doubt-sub{font-size:.8rem;color:var(--muted);margin-bottom:.85rem;line-height:1.5}
+.btn-call{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--white);color:var(--navy);
+  font-family:var(--font-display);font-weight:700;font-size:.85rem;
+  padding:.7rem 1.4rem;border-radius:var(--radius);
+  border:1.5px solid var(--navy);cursor:pointer;
+  transition:all .2s;
+}
+.btn-call:hover{background:var(--navy);color:var(--white)}
+.btn-call svg{width:16px;height:16px}
+.secure-note{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  font-size:.75rem;color:var(--muted);margin-top:.75rem;
+}
+.secure-note svg{width:13px;height:13px}
+
+/* MODAL APPEL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(15,25,35,.65);
+  z-index:200;align-items:center;justify-content:center;
+  padding:1rem;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--white);border-radius:var(--radius-lg);
+  padding:2rem;max-width:420px;width:100%;
+  animation:fadeUp .3s ease both;
+}
+.modal-title{
+  font-family:var(--font-display);font-size:1.15rem;font-weight:800;
+  color:var(--navy);margin-bottom:.4rem;
+}
+.modal-sub{font-size:.88rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6}
+.time-slots{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.25rem}
+.slot{
+  padding:.55rem .85rem;border:1.5px solid var(--border);
+  border-radius:var(--radius);font-size:.84rem;
+  text-align:center;cursor:pointer;
+  transition:all .15s;color:var(--muted);background:var(--white);
+}
+.slot:hover{border-color:var(--blue);color:var(--navy)}
+.slot.selected{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.25rem}
+.modal-actions .btn-primary{flex:1;justify-content:center}
+.modal-close{
+  background:none;border:1.5px solid var(--border);color:var(--muted);
+  font-family:var(--font-body);font-size:.85rem;
+  padding:.7rem 1rem;border-radius:var(--radius);cursor:pointer;
+  transition:all .2s;
+}
+.modal-close:hover{border-color:var(--navy);color:var(--navy)}
+
+/* EXIT INTENT */
+.exit-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(15,25,35,.65);z-index:300;
+  align-items:center;justify-content:center;padding:1rem;
+}
+.exit-overlay.open{display:flex}
+.exit-card{
+  background:var(--white);border-radius:var(--radius-lg);
+  padding:2rem;max-width:400px;width:100%;
+  animation:fadeUp .3s ease both;
+  text-align:center;
+}
+.exit-icon{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--cream2);margin:0 auto .75rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.exit-icon svg{width:22px;height:22px;stroke:var(--navy)}
+.exit-title{
+  font-family:var(--font-display);font-size:1.1rem;font-weight:800;
+  color:var(--navy);margin-bottom:.4rem;
+}
+.exit-sub{font-size:.88rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6}
+.exit-input-row{display:flex;gap:.5rem;margin-bottom:.75rem}
+.exit-input-row input{flex:1}
+.exit-actions{display:flex;flex-direction:column;gap:.5rem}
+.exit-dismiss{font-size:.78rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;background:none;border:none;padding:.3rem;font-family:var(--font-body)}
+
+/* CONFIRMATION */
+.confirm-icon{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--green);
+  margin:0 auto 1.5rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.confirm-icon svg{width:30px;height:30px;stroke:white;stroke-width:2.5}
+.confirm-title{
+  font-family:var(--font-display);font-size:1.6rem;font-weight:800;
+  color:var(--navy);text-align:center;margin-bottom:.5rem;
+}
+.confirm-sub{
+  text-align:center;color:var(--muted);margin-bottom:2rem;
+  font-size:.92rem;line-height:1.7;
+}
+.next-steps{background:var(--white);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;border:1px solid var(--border)}
+.next-step-item{
+  display:flex;gap:1rem;align-items:flex-start;
+  padding:.7rem 0;border-bottom:1px solid var(--cream2);
+}
+.next-step-item:last-child{border-bottom:none}
+.step-bubble{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--navy);color:var(--white);
+  font-family:var(--font-display);font-weight:700;font-size:.75rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.step-text{font-size:.88rem;color:var(--text);line-height:1.5}
+.step-text strong{display:block;font-weight:500;color:var(--navy)}
+
+/* ERROR */
+.field-error{font-size:.78rem;color:var(--error);margin-top:.35rem;display:none}
+.field-error.visible{display:block}
+input.invalid,textarea.invalid{border-color:var(--error)}
+
+/* UTILS */
+.divider{height:1px;background:var(--border);margin:1.5rem 0}
+.text-center{text-align:center}
+.mt-1{margin-top:.75rem}
+.mb-0{margin-bottom:0}
+
+/* PDF DOWNLOAD */
+.btn-pdf{
+  display:inline-flex;align-items:center;justify-content:center;gap:.55rem;
+  background:var(--green);color:var(--white);
+  font-family:var(--font-display);font-weight:700;font-size:.88rem;
+  padding:.8rem 1.5rem;border-radius:var(--radius);
+  border:none;cursor:pointer;transition:background .2s,transform .15s;
+  width:100%;margin-top:.75rem;
+}
+.btn-pdf:hover{opacity:.88;transform:translateY(-1px)}
+.btn-pdf svg{width:17px;height:17px;flex-shrink:0}
+.pdf-note{font-size:.75rem;color:var(--muted);text-align:center;margin-top:.5rem;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo" id="header-logo"></div>
+  <div class="header-step" id="header-step">Découverte</div>
+</div>
+<script>
+(function(){
+  var el=document.getElementById('header-logo');
+  if(THEME.logo_img){
+    el.innerHTML='<img src="'+THEME.logo_img+'" alt="Logo" style="height:'+THEME.logo_height+'px;display:block;object-fit:contain">';
+  } else {
+    var parts=THEME.logo_text.split('—');
+    el.innerHTML=parts[0].trim()+(parts[1]?' <span>—</span> '+parts[1].trim():'');
+  }
+})();
+</script>
+<div class="progress-wrap">
+  <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 0 — INTRO -->
+<!-- ------------------------------------------- -->
+<div class="screen active" id="s0">
+  <p class="intro-eyebrow">David MAMAN — Consultant en audit organisationnel</p>
+  <h1 class="intro-headline">
+    Votre expert-comptable vous dit<br>
+    ce que vous avez gagné.<br>
+    <em>AOS vous dit pourquoi.</em>
+  </h1>
+  <p class="intro-subline">
+    Et surtout — ce que vous pouvez faire pour que ce soit mieux demain. Ce questionnaire est la première étape d'un diagnostic conçu pour vous, pas pour une case à cocher.
+  </p>
+  <div class="intro-meta">
+    <div class="intro-meta-item"><span class="meta-dot"></span> 4 minutes chrono</div>
+    <div class="intro-meta-item"><span class="meta-dot"></span> Confidentiel & RGPD</div>
+    <div class="intro-meta-item"><span class="meta-dot"></span> Résultat sous 5 jours</div>
+  </div>
+  <button class="btn-primary" onclick="goTo(1)">
+    Commencer mon audit
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 1 — CHOIX DE L'OFFRE -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s1">
+  <p class="section-eyebrow">Étape 1 — Choisissez votre formule</p>
+  <h2 class="section-title">Par où voulez-vous commencer ?</h2>
+  <p class="section-intro">Chaque offre correspond à un moment précis dans la vie d'une entreprise. Choisissez celle qui résonne le plus avec votre situation aujourd'hui.</p>
+
+  <div class="offer-grid">
+    <div class="offer-card" id="offer-flash" onclick="selectOffer('flash')">
+      <div class="offer-check"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div>
+      <div class="offer-name">Audit Flash</div>
+      <div class="offer-price">350 € TTC — livré en 5 jours</div>
+      <div class="offer-desc">Un diagnostic rapide, 100 % à distance. Pour avoir un regard extérieur concret sans engagement lourd.</div>
+    </div>
+    <div class="offer-card" id="offer-dev" onclick="selectOffer('dev')">
+      <div class="offer-badge">Recommandé</div>
+      <div class="offer-check"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div>
+      <div class="offer-name">Audit Développement</div>
+      <div class="offer-price">1 200 € TTC — mission sur 2 semaines</div>
+      <div class="offer-desc">Analyse approfondie avec vos bilans sur 3 ans, 2 rendez-vous et un plan d'action structuré.</div>
+    </div>
+    <div class="offer-card" id="offer-premium" onclick="selectOffer('premium')">
+      <div class="offer-badge gold">Sur devis</div>
+      <div class="offer-check"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div>
+      <div class="offer-name">Audit Premium</div>
+      <div class="offer-price">À partir de 2 500 € TTC — jusqu'à 6 mois</div>
+      <div class="offer-desc">Immersion totale, vision 360°, entretiens équipe, co-construction de la stratégie.</div>
+    </div>
+  </div>
+  <div class="nav-row first">
+    <button class="btn-primary" id="btn-next-offer" onclick="validateOffer()" disabled style="opacity:.4;cursor:not-allowed">
+      Continuer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 2 — COORDONNÉES -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s2">
+  <p class="section-eyebrow">Étape 2 — Vos coordonnées</p>
+  <h2 class="section-title">Faisons connaissance</h2>
+  <p class="section-intro">Ces informations restent strictement confidentielles et ne servent qu'à personnaliser votre audit.</p>
+
+  <div class="field-group">
+    <label class="field-label">Prénom et nom</label>
+    <input type="text" id="f-nom" placeholder="Marie Dupont" oninput="saveField('nom',this.value)">
+    <div class="field-error" id="err-nom">Merci de renseigner votre nom.</div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Nom de votre entreprise</label>
+    <div class="autocomplete-wrap">
+      <input type="text" id="f-entreprise" placeholder="Tapez le nom ou le SIRET..." autocomplete="off"
+        oninput="saveField('entreprise',this.value);searchSociete(this.value)"
+        onfocus="if(this.value.length>2)searchSociete(this.value)">
+      <div class="autocomplete-list" id="ac-list" style="display:none"></div>
+    </div>
+    <div class="societe-info-card" id="societe-card"></div>
+    <div class="field-error" id="err-entreprise">Merci de renseigner le nom de votre entreprise.</div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label">Email professionnel</label>
+      <input type="email" id="f-email" placeholder="marie@entreprise.fr" oninput="saveField('email',this.value)">
+      <div class="field-error" id="err-email">Email invalide.</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Téléphone</label>
+      <input type="tel" id="f-tel" placeholder="06 00 00 00 00" oninput="saveField('tel',this.value)">
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Ville <span class="optional">(facultatif)</span></label>
+    <input type="text" id="f-ville" placeholder="Clermont-Ferrand" oninput="saveField('ville',this.value)">
+  </div>
+
+  <div class="rgpd-row">
+    <input type="checkbox" id="rgpd" onchange="saveField('rgpd',this.checked)">
+    <p class="rgpd-text">J'accepte d'être recontacté(e) par David MAMAN dans le cadre de mon audit. Vos données sont utilisées uniquement pour cette prestation, conformément au RGPD.</p>
+  </div>
+  <div class="field-error" id="err-rgpd">Vous devez accepter pour continuer.</div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(1)">← Retour</button>
+    <button class="btn-primary" onclick="validateCoords()">
+      Continuer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 3 — BLOC 1 : VOTRE ENTREPRISE -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s3">
+  <p class="section-eyebrow">Bloc 1 — Votre entreprise</p>
+  <h2 class="section-title">Parlons de votre activité</h2>
+  <p class="section-intro">Ces premières questions permettent de contextualiser votre situation. Il n'y a pas de bonne ou mauvaise réponse.</p>
+
+  <div class="field-group">
+    <label class="field-label">Secteur d'activité</label>
+    <div class="chips" id="chip-secteur">
+      <div class="chip" onclick="toggleChip(this,'secteur','Commerce')">Commerce</div>
+      <div class="chip" onclick="toggleChip(this,'secteur','Restauration & Hôtellerie')">Restauration & Hôtellerie</div>
+      <div class="chip" onclick="toggleChip(this,'secteur','Artisanat')">Artisanat</div>
+      <div class="chip" onclick="toggleChip(this,'secteur','Services aux entreprises')">Services aux entreprises</div>
+      <div class="chip" onclick="toggleChip(this,'secteur','Services à la personne')">Services à la personne</div>
+      <div class="chip" onclick="toggleChip(this,'secteur','Immobilier')">Immobilier</div>
+      <div class="chip" onclick="toggleChip(this,'secteur','Santé & Bien-être')">Santé & Bien-être</div>
+      <div class="chip" onclick="toggleChipAutre(this,'secteur','autre-secteur')">Autre</div>
+    </div>
+    <input type="text" class="autre-field" id="autre-secteur" placeholder="Précisez votre secteur d'activité..." oninput="saveField('secteur_autre',this.value)">
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label">Ancienneté</label>
+      <div class="chips" id="chip-anciennete">
+        <div class="chip" onclick="toggleChipSingle(this,'anciennete','Moins d\'un an')">Moins d'un an</div>
+        <div class="chip" onclick="toggleChipSingle(this,'anciennete','1 à 3 ans')">1 à 3 ans</div>
+        <div class="chip" onclick="toggleChipSingle(this,'anciennete','3 à 5 ans')">3 à 5 ans</div>
+        <div class="chip" onclick="toggleChipSingle(this,'anciennete','Plus de 5 ans')">Plus de 5 ans</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Taille de la structure</label>
+      <div class="chips" id="chip-taille">
+        <div class="chip" onclick="toggleChipSingle(this,'taille','1 seul')">1 seul</div>
+        <div class="chip" onclick="toggleChipSingle(this,'taille','2 à 5')">2 à 5</div>
+        <div class="chip" onclick="toggleChipSingle(this,'taille','6 à 10')">6 à 10</div>
+        <div class="chip" onclick="toggleChipSingleAutre(this,'taille','taille-autre')">+ de 10</div>
+      </div>
+      <input type="text" class="autre-field" id="taille-autre" placeholder="Nombre de personnes approximatif..." oninput="saveField('taille_detail',this.value)">
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Zone de chalandise <span class="optional">— où se trouvent vos clients ?</span></label>
+    <div class="chips" id="chip-zone">
+      <div class="chip" onclick="toggleChip(this,'zone','Quartier / ville')">Quartier / ville</div>
+      <div class="chip" onclick="toggleChip(this,'zone','Département')">Département</div>
+      <div class="chip" onclick="toggleChip(this,'zone','Région')">Région</div>
+      <div class="chip" onclick="toggleChip(this,'zone','National')">National</div>
+      <div class="chip" onclick="toggleChip(this,'zone','International')">International</div>
+      <div class="chip" onclick="toggleChip(this,'zone','En ligne — partout')">En ligne — partout</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Situation actuelle de votre entreprise</label>
+    <div class="chips" id="chip-situation">
+      <div class="chip" onclick="toggleChipSingle(this,'situation','En démarrage')">En démarrage</div>
+      <div class="chip" onclick="toggleChipSingle(this,'situation','En croissance')">En croissance</div>
+      <div class="chip" onclick="toggleChipSingle(this,'situation','En stabilité')">En stabilité</div>
+      <div class="chip" onclick="toggleChipSingle(this,'situation','En difficulté')">En difficulté</div>
+      <div class="chip" onclick="toggleChipSingle(this,'situation','En transition')">En transition</div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(2)">← Retour</button>
+    <button class="btn-primary" onclick="goTo(4)">
+      Continuer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 4 — BLOC 2 : VOTRE OFFRE -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s4">
+  <p class="section-eyebrow">Bloc 2 — Votre offre</p>
+  <h2 class="section-title">Ce que vous faites et pour qui</h2>
+  <p class="section-intro">C'est souvent ici que se révèlent les premières pistes d'amélioration. Soyez aussi précis que vous le souhaitez.</p>
+
+  <div class="field-group">
+    <label class="field-label">Décrivez votre activité principale en quelques mots</label>
+    <textarea id="f-activite" placeholder="Ex : je fabrique et vends des meubles sur mesure pour particuliers et professionnels..." oninput="saveField('activite',this.value)"></textarea>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Type d'offre</label>
+    <div class="chips" id="chip-type_offre">
+      <div class="chip" onclick="toggleChipSingle(this,'type_offre','Une offre principale')">Une offre principale</div>
+      <div class="chip" onclick="toggleChipSingle(this,'type_offre','Plusieurs offres complémentaires')">Plusieurs offres complémentaires</div>
+      <div class="chip" onclick="toggleChipSingle(this,'type_offre','Une gamme large')">Une gamme large</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Votre cible principale</label>
+    <div class="chips" id="chip-cible">
+      <div class="chip" onclick="toggleChipSingle(this,'cible','Particuliers')">Particuliers</div>
+      <div class="chip" onclick="toggleChipSingle(this,'cible','Professionnels')">Professionnels</div>
+      <div class="chip" onclick="toggleChipSingle(this,'cible','Les deux')">Les deux</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Qu'est-ce qui vous différencie de vos concurrents ?</label>
+    <textarea id="f-differenciation" placeholder="Ce que vous faites mieux, autrement, ou que personne d'autre ne fait..." oninput="saveField('differenciation',this.value)"></textarea>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Comment avez-vous formalisé votre offre ?</label>
+    <div class="chips" id="chip-formalisation">
+      <div class="chip" onclick="toggleChip(this,'formalisation','Plaquette commerciale')">Plaquette commerciale</div>
+      <div class="chip" onclick="toggleChip(this,'formalisation','Site internet')">Site internet</div>
+      <div class="chip" onclick="toggleChip(this,'formalisation','Réseaux sociaux')">Réseaux sociaux</div>
+      <div class="chip" onclick="toggleChip(this,'formalisation','Bouche à oreille uniquement')">Bouche à oreille uniquement</div>
+      <div class="chip" onclick="toggleChip(this,'formalisation','Rien de formalisé')">Rien de formalisé</div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(3)">← Retour</button>
+    <button class="btn-primary" onclick="goTo(5)">
+      Continuer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 5 — BLOC 3 : CLIENTÈLE & MARCHÉ -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s5">
+  <p class="section-eyebrow">Bloc 3 — Clientèle et marché</p>
+  <h2 class="section-title">Comment vous trouvent-ils ?</h2>
+  <p class="section-intro">Ces questions révèlent comment vous êtes perçu et comment vous vous positionnez sur votre marché.</p>
+
+  <div class="field-group">
+    <label class="field-label">Canal d'acquisition principal</label>
+    <div class="chips" id="chip-acquisition">
+      <div class="chip" onclick="toggleChip(this,'acquisition','Bouche à oreille')">Bouche à oreille</div>
+      <div class="chip" onclick="toggleChip(this,'acquisition','Réseaux sociaux')">Réseaux sociaux</div>
+      <div class="chip" onclick="toggleChip(this,'acquisition','Site internet')">Site internet</div>
+      <div class="chip" onclick="toggleChip(this,'acquisition','Google')">Google</div>
+      <div class="chip" onclick="toggleChip(this,'acquisition','Publicité')">Publicité</div>
+      <div class="chip" onclick="toggleChip(this,'acquisition','Prospection directe')">Prospection directe</div>
+      <div class="chip" onclick="toggleChipAutre(this,'acquisition','autre-acquisition')">Autre</div>
+    </div>
+    <input type="text" class="autre-field" id="autre-acquisition" placeholder="Précisez votre canal d'acquisition..." oninput="saveField('acquisition_autre',this.value)">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Avez-vous une idée précise de votre client idéal ?</label>
+    <div class="chips" id="chip-client_ideal">
+      <div class="chip" onclick="toggleChipSingle(this,'client_ideal','Oui, très clairement')">Oui, très clairement</div>
+      <div class="chip" onclick="toggleChipSingle(this,'client_ideal','Vaguement')">Vaguement</div>
+      <div class="chip" onclick="toggleChipSingle(this,'client_ideal','Pas vraiment')">Pas vraiment</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Vos avis clients en ligne</label>
+    <div class="chips" id="chip-avis">
+      <div class="chip" onclick="toggleChipSingle(this,'avis','Oui, globalement positifs')">Oui, globalement positifs</div>
+      <div class="chip" onclick="toggleChipSingle(this,'avis','Oui, mais peu nombreux')">Oui, mais peu nombreux</div>
+      <div class="chip" onclick="toggleChipSingle(this,'avis','Quelques-uns négatifs')">Quelques-uns négatifs</div>
+      <div class="chip" onclick="toggleChipSingle(this,'avis','Non, aucun')">Non, aucun</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Analyse concurrentielle</label>
+    <div class="chips" id="chip-veille">
+      <div class="chip" onclick="toggleChipSingle(this,'veille','Oui, régulièrement')">Oui, régulièrement</div>
+      <div class="chip" onclick="toggleChipSingle(this,'veille','Oui, mais pas récemment')">Oui, mais pas récemment</div>
+      <div class="chip" onclick="toggleChipSingle(this,'veille','Non, jamais')">Non, jamais</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Votre tarification est-elle adaptée au marché ?</label>
+    <div class="chips" id="chip-tarification">
+      <div class="chip" onclick="toggleChipSingle(this,'tarification','Oui')">Oui</div>
+      <div class="chip" onclick="toggleChipSingle(this,'tarification','Non, je suis trop cher(e)')">Non, trop cher(e)</div>
+      <div class="chip" onclick="toggleChipSingle(this,'tarification','Non, je suis trop accessible')">Non, trop accessible</div>
+      <div class="chip" onclick="toggleChipSingle(this,'tarification','Je ne sais pas')">Je ne sais pas</div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(4)">← Retour</button>
+    <button class="btn-primary" onclick="goTo(6)">
+      Continuer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 6 — BLOC 4 : ORGANISATION -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s6">
+  <p class="section-eyebrow">Bloc 4 — Organisation interne</p>
+  <h2 class="section-title">Comment fonctionne votre entreprise au quotidien ?</h2>
+  <p class="section-intro">Ces questions permettent d'identifier ce qui pourrait être optimisé pour vous libérer du temps et de l'énergie.</p>
+
+  <div class="field-group">
+    <label class="field-label">Outils de gestion utilisés</label>
+    <div class="chips" id="chip-outils">
+      <div class="chip" onclick="toggleChip(this,'outils','Logiciel de comptabilité')">Logiciel de comptabilité</div>
+      <div class="chip" onclick="toggleChip(this,'outils','CRM')">CRM</div>
+      <div class="chip" onclick="toggleChip(this,'outils','Outils de planification')">Outils de planification</div>
+      <div class="chip" onclick="toggleChip(this,'outils','Tableaux Excel')">Tableaux Excel</div>
+      <div class="chip" onclick="toggleChip(this,'outils','Aucun outil')">Aucun outil</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Consacrez-vous du temps au pilotage de votre activité ?</label>
+    <div class="chips" id="chip-pilotage">
+      <div class="chip" onclick="toggleChipSingle(this,'pilotage','Oui, chaque semaine')">Oui, chaque semaine</div>
+      <div class="chip" onclick="toggleChipSingle(this,'pilotage','Occasionnellement')">Occasionnellement</div>
+      <div class="chip" onclick="toggleChipSingle(this,'pilotage','Jamais, je suis toujours dans l\'opérationnel')">Jamais, toujours dans l'opérationnel</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Quelles tâches vous prennent le plus de temps sans sembler vraiment utiles ?</label>
+    <textarea id="f-taches" placeholder="Ex : la relance des impayés, la gestion des plannings, les devis..." oninput="saveField('taches',this.value)"></textarea>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Process formalisés dans votre entreprise</label>
+    <div class="chips" id="chip-process">
+      <div class="chip" onclick="toggleChipSingle(this,'process','Oui, pour la plupart')">Oui, pour la plupart</div>
+      <div class="chip" onclick="toggleChipSingle(this,'process','Quelques-uns')">Quelques-uns</div>
+      <div class="chip" onclick="toggleChipSingle(this,'process','Non, tout repose sur mes habitudes')">Non, tout repose sur mes habitudes</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Votre niveau de stress lié à la gestion de l'entreprise</label>
+    <div class="chips" id="chip-stress">
+      <div class="chip" onclick="toggleChipSingle(this,'stress','Faible')">Faible</div>
+      <div class="chip" onclick="toggleChipSingle(this,'stress','Modéré')">Modéré</div>
+      <div class="chip" onclick="toggleChipSingle(this,'stress','Élevé')">Élevé</div>
+      <div class="chip" onclick="toggleChipSingle(this,'stress','Très élevé')">Très élevé</div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(5)">← Retour</button>
+    <button class="btn-primary" onclick="goTo(7)">
+      Continuer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 7 — BLOC 5 : AMBITIONS -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s7">
+  <p class="section-eyebrow">Bloc 5 — Vos ambitions</p>
+  <h2 class="section-title">Où voulez-vous aller ?</h2>
+  <p class="section-intro">Pour terminer, parlons de vos projets. C'est en comprenant où vous voulez aller que nous pourrons vous proposer les pistes les plus adaptées.</p>
+
+  <div class="field-group">
+    <label class="field-label">Votre principal objectif pour les 12 prochains mois</label>
+    <div class="chips" id="chip-objectif">
+      <div class="chip" onclick="toggleChip(this,'objectif','Augmenter mon chiffre d\'affaires')">Augmenter mon CA</div>
+      <div class="chip" onclick="toggleChip(this,'objectif','Fidéliser ma clientèle')">Fidéliser ma clientèle</div>
+      <div class="chip" onclick="toggleChip(this,'objectif','Structurer mon organisation')">Structurer mon organisation</div>
+      <div class="chip" onclick="toggleChip(this,'objectif','Développer mon équipe')">Développer mon équipe</div>
+      <div class="chip" onclick="toggleChip(this,'objectif','Trouver un nouveau souffle')">Trouver un nouveau souffle</div>
+      <div class="chip" onclick="toggleChipAutre(this,'objectif','autre-objectif')">Autre</div>
+    </div>
+    <input type="text" class="autre-field" id="autre-objectif" placeholder="Décrivez votre objectif..." oninput="saveField('objectif_autre',this.value)">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Ce qui vous freine le plus aujourd'hui</label>
+    <div class="chips" id="chip-frein">
+      <div class="chip" onclick="toggleChipSingle(this,'frein','Manque de visibilité')">Manque de visibilité</div>
+      <div class="chip" onclick="toggleChipSingle(this,'frein','Manque de temps')">Manque de temps</div>
+      <div class="chip" onclick="toggleChipSingle(this,'frein','Manque de méthode')">Manque de méthode</div>
+      <div class="chip" onclick="toggleChipSingle(this,'frein','Manque de trésorerie')">Manque de trésorerie</div>
+      <div class="chip" onclick="toggleChipSingle(this,'frein','Je ne sais pas exactement')">Je ne sais pas exactement</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Avez-vous déjà fait appel à un consultant externe ?</label>
+    <div class="chips" id="chip-experience">
+      <div class="chip" onclick="toggleChipSingle(this,'experience','Oui, et c\'était utile')">Oui, et c'était utile</div>
+      <div class="chip" onclick="toggleChipSingle(this,'experience','Oui, mais sans résultat concret')">Oui, sans résultat concret</div>
+      <div class="chip" onclick="toggleChipSingle(this,'experience','Non, jamais')">Non, jamais</div>
+      <div class="chip" onclick="toggleChipSingle(this,'experience','Non, mais j\'y pense')">Non, mais j'y pense</div>
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Qu'attendez-vous concrètement de cet audit ?</label>
+    <textarea id="f-attentes" placeholder="Quelles réponses cherchez-vous ? Quels changements espérez-vous ?" oninput="saveField('attentes',this.value)"></textarea>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Autre chose à nous dire <span class="optional">(facultatif)</span></label>
+    <textarea id="f-complement" placeholder="Contexte particulier, urgence, contrainte spécifique..." oninput="saveField('complement',this.value)"></textarea>
+  </div>
+
+  <!-- Bloc spécifique Développement : checklist documents -->
+  <div id="dev-docs-block" style="display:none">
+    <div class="divider"></div>
+    <p class="section-eyebrow" style="margin-bottom:.5rem">Documents à préparer — Audit Développement</p>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Pour que votre audit soit le plus précis possible, merci de préparer les documents suivants avant notre premier rendez-vous :</p>
+    <div style="background:var(--white);border-radius:var(--radius);padding:1rem;border:1px solid var(--border);font-size:.84rem;color:var(--text);line-height:2">
+      ☐ Bilans et comptes de résultat (3 derniers exercices)<br>
+      ☐ Liasses fiscales (3 derniers exercices)<br>
+      ☐ Relevés bancaires (3 derniers mois)<br>
+      ☐ CA mensuel de l'année en cours<br>
+      ☐ Tarifs et supports commerciaux actuels<br>
+      ☐ URL site internet et réseaux sociaux<br>
+      ☐ Extrait Kbis à jour
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(6)">← Retour</button>
+    <button class="btn-primary" onclick="goToRecap()">
+      Voir mon récapitulatif
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 8 — RÉCAPITULATIF + MIROIR -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s8">
+  <p class="section-eyebrow">Récapitulatif</p>
+  <h2 class="section-title">Ce que vous nous avez dit</h2>
+
+  <div class="recap-highlight" id="recap-mirror">
+    <strong>Ce que j'ai compris de votre situation</strong>
+    <span id="recap-mirror-text"></span>
+  </div>
+
+  <div class="recap-grid" id="recap-grid"></div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(7)">← Modifier</button>
+    <button class="btn-primary" onclick="goTo(9)">
+      Finaliser mon audit
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 9 — PAIEMENT / CONVERSION -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s9">
+  <p class="section-eyebrow">Dernière étape</p>
+  <h2 class="section-title" id="pay-title">Lancez votre audit</h2>
+
+  <div class="payment-card" id="pay-card">
+    <div class="payment-price" id="pay-price">350 €<span style="font-size:1rem;font-weight:400;color:var(--muted)"> TTC</span></div>
+    <div class="payment-label" id="pay-label">Audit Flash — livré en 5 jours</div>
+    <ul class="payment-features" id="pay-features"></ul>
+    <button class="btn-pay" id="btn-pay" onclick="simulatePay()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span id="pay-btn-label">Payer et lancer mon audit</span>
+    </button>
+    <div class="secure-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Paiement 100 % sécurisé via Stripe
+    </div>
+  </div>
+
+  <div class="doubt-section">
+    <div class="doubt-title">Vous avez encore un doute ?</div>
+    <div class="doubt-sub">10 minutes avec moi pour répondre à vos questions et valider ensemble que cet audit correspond à votre situation.</div>
+    <button class="btn-call" onclick="openCallModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.7a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.6a16 16 0 0 0 5.47 5.47l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 17.92z"/></svg>
+      Programmer un appel de 10 minutes
+    </button>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goTo(8)">← Retour</button>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- SCREEN 10 — CONFIRMATION -->
+<!-- ------------------------------------------- -->
+<div class="screen" id="s10">
+  <div class="confirm-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h2 class="confirm-title" id="confirm-title">C'est lancé !</h2>
+  <p class="confirm-sub" id="confirm-sub">Votre questionnaire est bien reçu. Je vous envoie un email de confirmation dans les prochaines minutes.</p>
+
+  <div class="next-steps" id="confirm-steps"></div>
+
+  <div id="email-status" style="text-align:center;margin-top:.75rem;min-height:1.2rem"></div>
+
+  <button class="btn-pdf" onclick="downloadPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Télécharger mon questionnaire en PDF
+  </button>
+  <p class="pdf-note">Ce PDF peut être transmis directement à David MAMAN pour démarrer l'analyse.</p>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- MODAL — APPEL DE RASSURANCE -->
+<!-- ------------------------------------------- -->
+<div class="modal-overlay" id="modal-call">
+  <div class="modal">
+    <div class="modal-title">Choisissez un créneau</div>
+    <p class="modal-sub">Un appel de 10 minutes avec David MAMAN pour répondre à toutes vos questions avant de vous décider.</p>
+    <div class="time-slots" id="time-slots">
+      <div class="slot" onclick="selectSlot(this,'Aujourd\'hui 17h')">Aujourd'hui 17h</div>
+      <div class="slot" onclick="selectSlot(this,'Aujourd\'hui 19h')">Aujourd'hui 19h</div>
+      <div class="slot" onclick="selectSlot(this,'Demain 9h')">Demain 9h</div>
+      <div class="slot" onclick="selectSlot(this,'Demain 12h')">Demain 12h</div>
+      <div class="slot" onclick="selectSlot(this,'Demain 17h')">Demain 17h</div>
+      <div class="slot" onclick="selectSlot(this,'Demain 19h')">Demain 19h</div>
+    </div>
+    <div class="field-group mb-0">
+      <label class="field-label">Votre numéro de téléphone</label>
+      <input type="tel" id="modal-tel" placeholder="06 00 00 00 00">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" style="justify-content:center" onclick="confirmCall()">Confirmer mon appel</button>
+      <button class="modal-close" onclick="closeCallModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ------------------------------------------- -->
+<!-- EXIT INTENT -->
+<!-- ------------------------------------------- -->
+<div class="exit-overlay" id="exit-overlay">
+  <div class="exit-card">
+    <div class="exit-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </div>
+    <div class="exit-title">On s'arrête là ?</div>
+    <div class="exit-sub">Pas de problème — votre progression est sauvegardée. Si vous avez une question avant de continuer, je vous rappelle en 10 minutes, c'est sans engagement.</div>
+    <div class="exit-input-row">
+      <input type="tel" id="exit-tel" placeholder="Votre numéro...">
+      <button class="btn-primary" style="white-space:nowrap;padding:.75rem 1.2rem;font-size:.85rem" onclick="confirmExit()">Me rappeler</button>
+    </div>
+    <div class="exit-actions">
+      <button class="exit-dismiss" onclick="closeExit()">Continuer le questionnaire</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var D={offer:null,nom:'',entreprise:'',email:'',tel:'',ville:'',rgpd:false,responses:{},societeData:null};
+var currentScreen=0;
+var exitShown=false;
+var selectedSlot=null;
+var acTimer=null;
+
+function getProgress(s){
+  var map={0:0,1:5,2:15,3:30,4:45,5:60,6:72,7:84,8:90,9:95,10:100};
+  return map[s]||0;
+}
+
+function goTo(n){
+  document.getElementById('s'+currentScreen).classList.remove('active');
+  currentScreen=n;
+  document.getElementById('s'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('progress-bar').style.width=getProgress(n)+'%';
+  var labels={0:'Découverte',1:'Votre offre',2:'Coordonnées',3:'Bloc 1/5',4:'Bloc 2/5',5:'Bloc 3/5',6:'Bloc 4/5',7:'Bloc 5/5',8:'Récapitulatif',9:'Finalisation',10:'Confirmé'};
+  document.getElementById('header-step').textContent=labels[n]||'';
+}
+
+function saveField(k,v){D[k]=v}
+
+/* -- AUTOCOMPLETE SOCIÉTÉ (API Recherche Entreprises gouv.fr) -- */
+function searchSociete(val){
+  var list=document.getElementById('ac-list');
+  saveField('entreprise',val);
+  if(val.length<3){list.style.display='none';return}
+  clearTimeout(acTimer);
+  acTimer=setTimeout(function(){
+    list.style.display='block';
+    list.innerHTML='<div class="ac-loading">Recherche en cours…</div>';
+    fetch('https://recherche-entreprises.api.gouv.fr/search?q='+encodeURIComponent(val)+'&per_page=5')
+      .then(function(r){return r.json()})
+      .then(function(data){
+        if(!data.results||!data.results.length){
+          list.innerHTML='<div class="ac-loading">Aucun résultat trouvé</div>';
+          return;
+        }
+        list.innerHTML=data.results.map(function(e){
+          var siren=e.siren||'';
+          var ville=e.siege&&e.siege.libelle_commune?e.siege.libelle_commune:'';
+          var activite=e.activite_principale_libelle||e.activite_principale||'';
+          var effectif=e.tranche_effectif_salarie||'';
+          return '<div class="autocomplete-item" onclick="selectSociete(\''+escQ(e.nom_complet)+'\',\''+siren+'\',\''+escQ(ville)+'\',\''+escQ(activite)+'\',\''+escQ(effectif)+'\')">'+
+            '<div class="ac-name">'+escH(e.nom_complet)+'</div>'+
+            '<div class="ac-meta">'+[ville,activite].filter(Boolean).join(' · ')+(siren?' — SIREN : '+siren:'')+'</div>'+
+          '</div>';
+        }).join('');
+      })
+      .catch(function(){list.innerHTML='<div class="ac-loading">Recherche indisponible</div>'});
+  },380);
+}
+
+function escQ(s){return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function escH(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function selectSociete(nom,siren,ville,activite,effectif){
+  document.getElementById('f-entreprise').value=nom;
+  document.getElementById('ac-list').style.display='none';
+  D.entreprise=nom;
+  D.societeData={siren,ville,activite,effectif};
+  if(ville&&!D.ville){document.getElementById('f-ville').value=ville;D.ville=ville}
+  var card=document.getElementById('societe-card');
+  var lines=[];
+  if(siren) lines.push('<strong>Infos entreprise</strong>');
+  if(siren) lines.push('SIREN : '+siren);
+  if(ville) lines.push('Siège : '+ville);
+  if(activite) lines.push('Activité : '+activite);
+  if(effectif) lines.push('Effectif déclaré : '+effectif);
+  if(lines.length>1){card.innerHTML=lines.join('<br>');card.classList.add('visible')}
+}
+
+document.addEventListener('click',function(e){
+  var list=document.getElementById('ac-list');
+  if(list&&!list.contains(e.target)&&e.target.id!=='f-entreprise') list.style.display='none';
+});
+
+/* -- CHIPS -- */
+function toggleChip(el,key,val){
+  /* Si "Autre" est actif dans ce groupe, le désactiver et fermer son champ */
+  var p=el.parentNode;
+  var autreChip=p.querySelector('.chip[onclick*="toggleChipAutre"]');
+  if(autreChip&&autreChip.classList.contains('active')){
+    autreChip.classList.remove('active');
+    /* Fermer le champ texte associé */
+    var match=autreChip.getAttribute('onclick').match(/toggleChipAutre\([^,]+,[^,]+,'([^']+)'\)/);
+    if(match){var f=document.getElementById(match[1]);if(f){f.classList.remove('visible');f.value='';}}
+    /* Retirer 'Autre' du tableau */
+    if(D.responses[key]){var idx=D.responses[key].indexOf('Autre');if(idx>=0)D.responses[key].splice(idx,1);}
+    saveField(key+'_autre','');
+  }
+  el.classList.toggle('active');
+  if(!D.responses[key]) D.responses[key]=[];
+  var idx=D.responses[key].indexOf(val);
+  if(idx>=0) D.responses[key].splice(idx,1);
+  else D.responses[key].push(val);
+}
+
+function toggleChipSingle(el,key,val){
+  var p=el.parentNode;
+  p.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  D.responses[key]=val;
+  /* Fermer le champ autre si présent */
+  var autreField=p.parentNode.querySelector('.autre-field');
+  if(autreField){autreField.classList.remove('visible');autreField.value='';}
+}
+
+function toggleChipAutre(el,key,fieldId){
+  var p=el.parentNode;
+  /* Si déjà actif : désactiver et fermer */
+  if(el.classList.contains('active')){
+    el.classList.remove('active');
+    var idx=D.responses[key]?D.responses[key].indexOf('Autre'):-1;
+    if(idx>=0) D.responses[key].splice(idx,1);
+    var f=document.getElementById(fieldId);
+    if(f){f.classList.remove('visible');f.value='';}
+    saveField(key+'_autre','');
+    return;
+  }
+  /* Activer sans désactiver les autres chips (multi-sélection) */
+  el.classList.add('active');
+  if(!D.responses[key]) D.responses[key]=[];
+  if(!D.responses[key].includes('Autre')) D.responses[key].push('Autre');
+  var f=document.getElementById(fieldId);
+  if(f){f.classList.add('visible');f.focus();}
+}
+
+function toggleChipSingleAutre(el,key,fieldId){
+  var p=el.parentNode;
+  p.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  D.responses[key]='Plus de 10';
+  var f=document.getElementById(fieldId);
+  if(f){f.classList.add('visible');f.focus();}
+}
+
+/* -- OFFRE -- */
+function selectOffer(o){
+  D.offer=o;
+  document.querySelectorAll('.offer-card').forEach(function(c){c.className='offer-card'});
+  var cls={flash:'selected',dev:'selected',premium:'selected-gold'};
+  document.getElementById('offer-'+o).className='offer-card '+(cls[o]||'selected');
+  var btn=document.getElementById('btn-next-offer');
+  btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';
+}
+
+function validateOffer(){if(D.offer) goTo(2)}
+
+/* -- COORDS -- */
+function validateCoords(){
+  var ok=true;
+  if(!D.nom){showErr('err-nom');document.getElementById('f-nom').classList.add('invalid');ok=false}
+  else{hideErr('err-nom');document.getElementById('f-nom').classList.remove('invalid')}
+  if(!D.entreprise){showErr('err-entreprise');document.getElementById('f-entreprise').classList.add('invalid');ok=false}
+  else{hideErr('err-entreprise');document.getElementById('f-entreprise').classList.remove('invalid')}
+  if(!D.email||!D.email.includes('@')){showErr('err-email');document.getElementById('f-email').classList.add('invalid');ok=false}
+  else{hideErr('err-email');document.getElementById('f-email').classList.remove('invalid')}
+  if(!D.rgpd){showErr('err-rgpd');ok=false}else{hideErr('err-rgpd')}
+  if(ok) goTo(3);
+}
+
+function showErr(id){document.getElementById(id).classList.add('visible')}
+function hideErr(id){document.getElementById(id).classList.remove('visible')}
+
+/* -- RÉCAP -- */
+function goToRecap(){
+  if(D.offer==='dev') document.getElementById('dev-docs-block').style.display='block';
+  buildRecap();
+  goTo(8);
+  sendPDFByEmail();
+}
+
+function buildRecap(){
+  var r=D.responses;
+  var prenom=D.nom.split(' ')[0]||D.nom;
+  var entreprise=D.entreprise||'votre entreprise';
+
+  /* - MIROIR en phrases naturelles - */
+  var phrases=[];
+  var secteur=Array.isArray(r.secteur)?r.secteur.join(' et '):r.secteur||'';
+  if(r.secteur_autre) secteur=r.secteur_autre;
+  var anciennete=r.anciennete||'';
+  var situation=r.situation||'';
+  var taille=r.taille||(r.taille_detail?'plus de 10 personnes':'');
+  var frein=r.frein||'';
+  var objectifs=Array.isArray(r.objectif)?r.objectif:(r.objectif?[r.objectif]:[]);
+  if(r.objectif_autre) objectifs.push(r.objectif_autre);
+  var stress=r.stress||'';
+  var acquisition=Array.isArray(r.acquisition)?r.acquisition.join(', '):r.acquisition||'';
+  if(r.acquisition_autre) acquisition+=(acquisition?', ':'')+r.acquisition_autre;
+  var experience=r.experience||'';
+
+  /* Phrase 1 - qui ils sont */
+  if(secteur&&anciennete){
+    phrases.push(prenom+', vous dirigez '+entreprise+', une structure dans le secteur '+secteur.toLowerCase()+' depuis '+anciennete.toLowerCase()+(taille?' avec '+taille.toLowerCase()+' à bord':'')+'.'); 
+  } else if(anciennete){
+    phrases.push(prenom+', '+entreprise+' existe depuis '+anciennete.toLowerCase()+(taille?', avec '+taille.toLowerCase()+' dans l\'équipe':'')+'.'); 
+  }
+
+  /* Phrase 2 - situation */
+  var sitMap={'En difficulté':'traverse une période difficile','En croissance':'est en pleine croissance','En stabilité':'est dans une phase de stabilité','En démarrage':'vient de démarrer','En transition':'est en train de se réinventer'};
+  if(situation&&sitMap[situation]){
+    phrases.push('Aujourd\'hui, votre entreprise '+sitMap[situation]+'.'); 
+  }
+
+  /* Phrase 3 - frein */
+  if(frein){
+    var freinMap={'Manque de visibilité':'vous manquez de visibilité sur votre activité','Manque de temps':'le temps vous fait défaut pour prendre de la hauteur','Manque de méthode':'vous cherchez une méthode pour avancer plus efficacement','Manque de trésorerie':'la trésorerie est un point de tension','Je ne sais pas exactement':'vous sentez que quelque chose bloque, sans pouvoir encore le nommer précisément'};
+    phrases.push('Ce qui vous freine le plus en ce moment : '+(freinMap[frein]||frein.toLowerCase())+'.'); 
+  }
+
+  /* Phrase 4 - objectif */
+  if(objectifs.length){
+    var obj=objectifs.map(function(o){return o.toLowerCase().replace('augmenter mon chiffre d\'affaires','augmenter votre chiffre d\'affaires').replace('fidéliser ma clientèle','fidéliser votre clientèle').replace('structurer mon organisation','structurer votre organisation').replace('développer mon équipe','développer votre équipe').replace('trouver un nouveau souffle','retrouver un nouveau souffle')});
+    phrases.push('Ce que vous voulez construire dans les 12 prochains mois : '+obj.join(', ')+'.'); 
+  }
+
+  /* Phrase 5 - stress ou expérience conseil */
+  if(stress==='Élevé'||stress==='Très élevé'){
+    phrases.push('Vous portez un niveau de stress '+stress.toLowerCase()+' au quotidien — c\'est précisément pour ça que ce regard extérieur peut changer les choses.'); 
+  } else if(experience==='Oui, mais sans résultat concret'){
+    phrases.push('Vous avez déjà fait appel à un consultant, mais sans résultat concret. Mon approche est différente : elle est opérationnelle, pas théorique.'); 
+  } else if(experience==='Non, jamais'||experience==="Non, mais j'y pense"){
+    phrases.push('C\'est votre première démarche d\'audit — c\'est souvent là que les choses changent vraiment.'); 
+  }
+
+  var mirror=document.getElementById('recap-mirror-text');
+  mirror.innerHTML=phrases.map(function(p){return '<p style="margin-bottom:.5rem">'+p+'</p>'}).join('');
+
+  /* - GRILLE RÉCAP - */
+  var blocs=[
+    {name:'Votre entreprise',fields:[{l:'Secteur',k:'secteur'},{l:'Ancienneté',k:'anciennete'},{l:'Taille',k:'taille'},{l:'Zone de chalandise',k:'zone'},{l:'Situation',k:'situation'}]},
+    {name:'Votre offre',fields:[{l:'Activité',k:'activite'},{l:'Type',k:'type_offre'},{l:'Cible',k:'cible'},{l:'Différenciation',k:'differenciation'}]},
+    {name:'Clientèle & marché',fields:[{l:'Acquisition',k:'acquisition'},{l:'Client idéal',k:'client_ideal'},{l:'Tarification',k:'tarification'}]},
+    {name:'Organisation',fields:[{l:'Outils',k:'outils'},{l:'Pilotage',k:'pilotage'},{l:'Stress',k:'stress'}]},
+    {name:'Ambitions',fields:[{l:'Objectifs',k:'objectif'},{l:'Frein principal',k:'frein'},{l:'Attentes',k:'attentes'}]},
+  ];
+  var html='';
+  blocs.forEach(function(b){
+    var lines=b.fields.map(function(f){
+      var v=r[f.k];
+      if(!v||v.length===0) return '';
+      var vStr=Array.isArray(v)?v.join(', '):v;
+      return '<span style="color:var(--muted);font-size:.8rem">'+f.l+' : </span>'+escH(vStr);
+    }).filter(Boolean).join('<br>');
+    if(!lines) return;
+    html+='<div class="recap-item"><div class="recap-bloc-name">'+b.name+'</div><div class="recap-content">'+lines+'</div></div>';
+  });
+  document.getElementById('recap-grid').innerHTML=html;
+  buildPayScreen();
+}
+
+/* -- PAIEMENT -- */
+function buildPayScreen(){
+  var offers={
+    flash:{price:'350 € TTC',label:'Audit Flash — livré en 5 jours',btnLabel:'Payer et lancer mon audit',features:['Analyse du questionnaire par David MAMAN','Entretien d\'approfondissement J3 (30 min)','Rapport PDF de 3 à 5 pages actionnable','Séance de restitution J5 (30 min)','−20 % sur l\'Audit Développement si souhaité']},
+    dev:{price:'600 € TTC',label:'Audit Développement — acompte 50 %',btnLabel:'Régler l\'acompte et lancer la mission',features:['Analyse approfondie sur 2 semaines','Étude des bilans sur 3 exercices','RDV 1 physique — lancement de mission (1h30)','RDV 2 restitution + plan d\'action priorisé','Rapport complet 8 à 12 pages']},
+    premium:{price:'Sur devis',label:'Audit Premium — à partir de 2 500 € TTC',btnLabel:'Réserver mon appel découverte gratuit',features:['Immersion terrain (2 jours minimum)','Entretiens individuels avec toute l\'équipe','Vision 360° — croisement dirigeant + équipe','Feuille de route stratégique co-construite','Suivi mensuel jusqu\'à 6 mois']}
+  };
+  var o=offers[D.offer]||offers.flash;
+  document.getElementById('pay-price').innerHTML=D.offer==='premium'?'<span style="font-size:1.3rem;font-weight:700">Sur devis</span>':o.price.replace(' TTC','<span style="font-size:1rem;font-weight:400;color:var(--muted)"> TTC</span>');
+  document.getElementById('pay-label').textContent=o.label;
+  document.getElementById('pay-btn-label').textContent=o.btnLabel;
+  document.getElementById('pay-features').innerHTML=o.features.map(function(f){return '<li><div class="feat-dot"><svg viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 3,6 7,1.5"/></svg></div>'+f+'</li>'}).join('');
+}
+
+function simulatePay(){
+  buildConfirm();
+  goTo(10);
+}
+
+/* -- ENVOI MAKE WEBHOOK -- */
+async function sendPDFByEmail(){
+  console.log('[AOS] sendPDFByEmail appelé — début');
+  var statusEl=document.getElementById('email-status');
+  console.log('[AOS] statusEl:', statusEl ? 'trouvé' : 'NULL');
+  if(statusEl) statusEl.innerHTML='<span style="color:var(--muted);font-size:.78rem">Transmission du dossier...</span>';
+  try{
+    var r=D.responses;
+    var offreLabels={flash:'Audit Flash — 350 EUR TTC',dev:'Audit Developpement — 1200 EUR TTC',premium:'Audit Premium — Sur devis'};
+    var offreLabel=offreLabels[D.offer]||D.offer||'Non precise';
+
+    /* Resume complet */
+    var resume='';
+    resume+='BLOC 1 - VOTRE ENTREPRISE\n';
+    resume+='Secteur         : '+(Array.isArray(r.secteur)?r.secteur.join(', '):r.secteur||'-')+'\n';
+    if(r.secteur_autre) resume+='Secteur detail  : '+r.secteur_autre+'\n';
+    resume+='Anciennete      : '+(r.anciennete||'-')+'\n';
+    resume+='Taille          : '+(r.taille||'-')+(r.taille_detail?' ('+r.taille_detail+')':'')+'\n';
+    resume+='Zone chalandise : '+(Array.isArray(r.zone)?r.zone.join(', '):r.zone||'-')+'\n';
+    resume+='Situation       : '+(r.situation||'-')+'\n';
+    resume+='\nBLOC 2 - VOTRE OFFRE\n';
+    resume+='Activite        : '+(D.activite||'-')+'\n';
+    resume+='Type offre      : '+(r.type_offre||'-')+'\n';
+    resume+='Cible           : '+(r.cible||'-')+'\n';
+    resume+='Differenciation : '+(D.differenciation||'-')+'\n';
+    resume+='Formalisation   : '+(Array.isArray(r.formalisation)?r.formalisation.join(', '):r.formalisation||'-')+'\n';
+    resume+='\nBLOC 3 - CLIENTELE ET MARCHE\n';
+    resume+='Acquisition     : '+(Array.isArray(r.acquisition)?r.acquisition.join(', '):r.acquisition||'-')+'\n';
+    if(r.acquisition_autre) resume+='Acquis. detail  : '+r.acquisition_autre+'\n';
+    resume+='Client ideal    : '+(r.client_ideal||'-')+'\n';
+    resume+='Avis en ligne   : '+(r.avis||'-')+'\n';
+    resume+='Veille          : '+(r.veille||'-')+'\n';
+    resume+='Tarification    : '+(r.tarification||'-')+'\n';
+    resume+='\nBLOC 4 - ORGANISATION INTERNE\n';
+    resume+='Outils          : '+(Array.isArray(r.outils)?r.outils.join(', '):r.outils||'-')+'\n';
+    resume+='Pilotage        : '+(r.pilotage||'-')+'\n';
+    resume+='Taches chrono.  : '+(D.taches||'-')+'\n';
+    resume+='Process         : '+(r.process||'-')+'\n';
+    resume+='Stress          : '+(r.stress||'-')+'\n';
+    resume+='\nBLOC 5 - AMBITIONS\n';
+    resume+='Objectif        : '+(Array.isArray(r.objectif)?r.objectif.join(', '):r.objectif||'-')+'\n';
+    if(r.objectif_autre) resume+='Objectif detail : '+r.objectif_autre+'\n';
+    resume+='Frein principal : '+(r.frein||'-')+'\n';
+    resume+='Experience      : '+(r.experience||'-')+'\n';
+    resume+='Attentes        : '+(D.attentes||'-')+'\n';
+    resume+='Complement      : '+(D.complement||'-')+'\n';
+
+    /* Prompt IA */
+    var promptIA='Analyse ce dossier prospect AOS et produis deux rapports :\n';
+    promptIA+='1. Rapport interne David : signaux forts, faibles, hypotheses, questions RDV\n';
+    promptIA+='2. Rapport client AOS : contexte, scoring 5 blocs, 3 points forts, 3 axes prioritaires, plan action\n\n';
+    promptIA+='Offre : '+offreLabel+'\n';
+    promptIA+='Nom : '+(D.nom||'-')+'\n';
+    promptIA+='Entreprise : '+(D.entreprise||'-')+'\n';
+    promptIA+='Ville : '+(D.ville||'-')+'\n';
+    if(D.societeData&&D.societeData.siren) promptIA+='SIREN : '+D.societeData.siren+'\n';
+    promptIA+='\n'+resume;
+
+    var payload={
+      nom        : D.nom||'',
+      entreprise : D.entreprise||'',
+      email      : D.email||'',
+      tel        : D.tel||'',
+      ville      : D.ville||'',
+      offre      : offreLabel,
+      date       : new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}),
+      resume     : resume,
+      prompt_ia  : promptIA
+    };
+
+    console.log('[AOS] Envoi vers Make:', MAKE_WEBHOOK);
+    var resp=await fetch(MAKE_WEBHOOK,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+
+    if(resp.ok){
+      if(statusEl) statusEl.innerHTML='<span style="color:var(--green);font-size:.78rem">✓ Dossier transmis avec succès</span>';
+    } else {
+      throw new Error('HTTP '+resp.status);
+    }
+  }catch(err){
+    console.error('[AOS] Erreur webhook Make:',err);
+    if(statusEl) statusEl.innerHTML='<span style="color:var(--error);font-size:.78rem">⚠ Envoi echoue ('+err.message+') — téléchargez le PDF manuellement</span>';
+  }
+}
+
+/* -- CONFIRMATION -- */
+function buildConfirm(){
+  var titles={flash:'C\'est lancé !',dev:'Mission lancée !',premium:'Appel réservé !'};
+  var subs={
+    flash:'Votre questionnaire est bien reçu, '+(D.nom.split(' ')[0]||'')+'. Vous allez recevoir un email de confirmation avec le lien pour réserver votre entretien d\'approfondissement.',
+    dev:'Parfait. Votre dossier est ouvert. Je vous contacte pour planifier le RDV 1 dans les 3 jours ouvrés.',
+    premium:'Votre demande est enregistrée. David vous contacte sous 24h pour confirmer votre appel découverte.'
+  };
+  var steps={
+    flash:[['Maintenant','Email de confirmation + lien Calendly pour votre entretien J3'],['Dans 3 jours','Entretien d\'approfondissement de 30 minutes'],['Dans 5 jours','Réception de votre rapport + séance de restitution']],
+    dev:[['Dans les 3 jours','Prise de contact pour planifier le RDV 1'],['RDV 1','Lancement de mission dans vos locaux (1h30)'],['J+14','Restitution du rapport complet + plan d\'action']],
+    premium:[['Sous 24h','David vous appelle pour valider le périmètre'],['Sous 48h','Envoi du devis personnalisé'],['Au démarrage','Signature de la lettre de mission + lancement']]
+  };
+  document.getElementById('confirm-title').textContent=titles[D.offer]||titles.flash;
+  document.getElementById('confirm-sub').textContent=subs[D.offer]||subs.flash;
+  var html=(steps[D.offer]||steps.flash).map(function(s,i){
+    return '<div class="next-step-item"><div class="step-bubble">'+(i+1)+'</div><div class="step-text"><strong>'+s[0]+'</strong>'+s[1]+'</div></div>';
+  }).join('');
+  document.getElementById('confirm-steps').innerHTML=html;
+}
+
+/* -- MODAL APPEL -- */
+function openCallModal(){document.getElementById('modal-call').classList.add('open')}
+function closeCallModal(){document.getElementById('modal-call').classList.remove('open')}
+function selectSlot(el,val){
+  selectedSlot=val;
+  document.querySelectorAll('.slot').forEach(function(s){s.classList.remove('selected')});
+  el.classList.add('selected');
+}
+function confirmCall(){
+  if(!selectedSlot){alert('Choisissez un créneau.');return}
+  closeCallModal();buildConfirm();goTo(10);
+  sendPDFByEmail();
+}
+
+/* -- GÉNÉRATION PDF -- */
+function buildPDFDoc(){
+  var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  var r=D.responses;
+  var pageW=210;var margin=18;var contentW=pageW-margin*2;var y=0;
+  var NAVY=[15,25,35];var BLUE=[27,79,138];var GOLD=[184,147,58];
+  var MUTED=[107,107,107];var BORDER=[216,212,204];var CREAM=[245,242,235];
+  function newPage(){doc.addPage();y=20}
+  function checkY(n){if(y+n>275)newPage()}
+  /* COUVERTURE */
+  doc.setFillColor(NAVY[0],NAVY[1],NAVY[2]);doc.rect(0,0,210,297,'F');
+  doc.setFillColor(GOLD[0],GOLD[1],GOLD[2]);doc.rect(0,0,4,297,'F');
+  doc.setTextColor(GOLD[0],GOLD[1],GOLD[2]);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  doc.text('AOS — AUDIT ORGANISATIONNEL ET STRUCTUREL',margin,28);
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(28);
+  doc.text('Questionnaire',margin,58);doc.text('Audit Flash',margin,70);
+  doc.setDrawColor(GOLD[0],GOLD[1],GOLD[2]);doc.setLineWidth(.5);doc.line(margin,78,margin+60,78);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(200,200,200);
+  if(D.nom)doc.text(D.nom,margin,90);
+  if(D.entreprise){doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);doc.text(D.entreprise,margin,100)}
+  if(D.ville){doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(160,160,160);doc.text(D.ville,margin,108)}
+  var oL={flash:'Audit Flash — 350 € TTC',dev:'Audit Développement — 1 200 € TTC',premium:'Audit Premium — Sur devis'};
+  var ol=oL[D.offer]||'';
+  if(ol){doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]);doc.roundedRect(margin,118,80,8,2,2,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(ol,margin+4,123.5)}
+  var ds=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(100,100,100);
+  doc.text('Rempli le '+ds,margin,275);doc.text('contact@aos-audit.fr',pageW-margin,275,{align:'right'});
+  /* CONTENU */
+  doc.addPage();y=20;
+  function sT(txt){
+    checkY(12);
+    doc.setFillColor(NAVY[0],NAVY[1],NAVY[2]);doc.rect(margin,y,contentW,8,'F');
+    doc.setFillColor(GOLD[0],GOLD[1],GOLD[2]);doc.rect(margin,y,2,8,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);
+    doc.text(txt.toUpperCase(),margin+5,y+5.2);y+=12;
+  }
+  function qr(q,v){
+    if(!v||v===''||v.length===0)return;
+    var val=Array.isArray(v)?v.join(', '):v;
+    if(!val||val.trim()==='')return;
+    checkY(14);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text(q,margin,y);y+=4;
+    doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(NAVY[0],NAVY[1],NAVY[2]);
+    var ls=doc.splitTextToSize(val,contentW);
+    ls.forEach(function(l){checkY(6);doc.text(l,margin,y);y+=5.5});y+=3;
+  }
+  function ft(label,val){
+    if(!val||val.trim()==='')return;
+    checkY(16);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text(label,margin,y);y+=4;
+    doc.setFillColor(CREAM[0],CREAM[1],CREAM[2]);
+    var ls=doc.splitTextToSize(val,contentW-6);var bH=ls.length*5+6;checkY(bH);
+    doc.rect(margin,y,contentW,bH,'F');
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(NAVY[0],NAVY[1],NAVY[2]);
+    ls.forEach(function(l,i){doc.text(l,margin+3,y+5+i*5)});y+=bH+4;
+  }
+  sT('Coordonnées');
+  qr('Nom et Prénom',D.nom);qr('Entreprise',D.entreprise);qr('Email',D.email);qr('Téléphone',D.tel);qr('Ville',D.ville);
+  if(D.societeData&&D.societeData.siren){
+    qr('SIREN',D.societeData.siren);
+    if(D.societeData.activite)qr('Activité (source Pappers)',D.societeData.activite);
+    if(D.societeData.effectif)qr('Effectif déclaré',D.societeData.effectif);
+  }
+  y+=2;
+  sT('Bloc 1 — Votre entreprise');
+  qr('Secteur',r.secteur);if(r.secteur_autre)qr('Secteur (précision)',r.secteur_autre);
+  qr('Ancienneté',r.anciennete);qr('Taille',r.taille);if(r.taille_detail)qr('Effectif précis',r.taille_detail);
+  qr('Zone de chalandise',r.zone);qr('Situation actuelle',r.situation);y+=2;
+  sT('Bloc 2 — Votre offre');
+  ft('Activit\u00e9 principale',D.activite);qr('Type d\'offre',r.type_offre);qr('Cible',r.cible);
+  ft('Diff\u00e9renciation',D.differenciation);qr('Formalisation',r.formalisation);y+=2;
+  sT('Bloc 3 — Client\u00e8le et march\u00e9');
+  qr('Acquisition',r.acquisition);if(r.acquisition_autre)qr('Acquisition (pr\u00e9cision)',r.acquisition_autre);
+  qr('Client id\u00e9al',r.client_ideal);qr('Avis en ligne',r.avis);qr('Analyse concurrentielle',r.veille);qr('Tarification',r.tarification);y+=2;
+  sT('Bloc 4 — Organisation interne');
+  qr('Outils',r.outils);qr('Pilotage',r.pilotage);ft('T\u00e2ches chronophages',D.taches);qr('Process',r.process);qr('Stress',r.stress);y+=2;
+  sT('Bloc 5 — Vos ambitions');
+  qr('Objectif 12 mois',r.objectif);if(r.objectif_autre)qr('Objectif (pr\u00e9cision)',r.objectif_autre);
+  qr('Frein principal',r.frein);qr('Exp\u00e9rience conseil',r.experience);
+  ft('Attentes de l\'audit',D.attentes);ft('Informations compl\u00e9mentaires',D.complement);y+=2;
+  /* PIED DE PAGE */
+  var tp=doc.internal.getNumberOfPages();
+  for(var i=1;i<=tp;i++){
+    doc.setPage(i);if(i===1)continue;
+    doc.setDrawColor(BORDER[0],BORDER[1],BORDER[2]);doc.setLineWidth(.3);doc.line(margin,285,pageW-margin,285);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(MUTED[0],MUTED[1],MUTED[2]);
+    doc.text('AOS — Audit Organisationnel et Structurel | David MAMAN | contact@aos-audit.fr',margin,290);
+    doc.text('Page '+i+'/'+tp,pageW-margin,290,{align:'right'});
+  }
+  return doc;
+}
+
+function downloadPDF(){
+  var doc=buildPDFDoc();
+  var fn='AOS_Questionnaire_'+(D.entreprise||D.nom||'prospect').replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+  doc.save(fn);
+}
+
+/* -- EXIT INTENT -- */
+function closeExit(){document.getElementById('exit-overlay').classList.remove('open')}
+function confirmExit(){closeExit();alert('Parfait ! David vous rappellera dans les 24h.')}
+
+/* -- EXIT INTENT INTELLIGENT --
+   3 signaux combinés pour éviter les faux positifs Mac :
+   1. Scroll rapide vers le haut (intention de partir)
+   2. Inactivité prolongée (≥90s sans interaction)
+   3. Clic sur le bouton retour navigateur (popstate)
+   Chaque signal ne déclenche qu'UNE seule fois au total.
+---------------------------------------------- */
+var lastScrollY=0;
+var lastActivity=Date.now();
+var inactivityTimer=null;
+
+function triggerExit(){
+  if(exitShown||currentScreen<2||currentScreen>=9) return;
+  exitShown=true;
+  document.getElementById('exit-overlay').classList.add('open');
+}
+
+/* Signal 1 - scroll rapide vers le haut (>120px en une passe) */
+window.addEventListener('scroll',function(){
+  var y=window.scrollY;
+  if(lastScrollY-y>120&&y<80) triggerExit();
+  lastScrollY=y;
+  lastActivity=Date.now();
+  resetInactivity();
+},{ passive:true });
+
+/* Signal 2 - inactivité 90 secondes */
+function resetInactivity(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer=setTimeout(function(){
+    if(currentScreen>=2&&currentScreen<9) triggerExit();
+  },90000);
+}
+['click','keydown','touchstart','mousemove'].forEach(function(ev){
+  document.addEventListener(ev,function(){lastActivity=Date.now();resetInactivity();},{passive:true});
+});
+resetInactivity();
+
+/* Signal 3 - bouton retour navigateur */
+history.pushState(null,null,location.href);
+window.addEventListener('popstate',function(){
+  history.pushState(null,null,location.href);
+  triggerExit();
+});
+</script>
+</body>
+</html>
