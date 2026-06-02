@@ -1555,7 +1555,8 @@ async function sendPDFByEmail(){
       prompt_ia  : promptIA
     };
 
-    console.log('[AOS] Envoi vers Make:', MAKE_WEBHOOK);
+    console.log('[AOS] Payload envoyé:', JSON.stringify(payload));
+    console.log('[AOS] nom:', payload.nom, '| email:', payload.email, '| entreprise:', payload.entreprise);
     var resp=await fetch(MAKE_WEBHOOK,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
